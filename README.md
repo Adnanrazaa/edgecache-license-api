@@ -1,11 +1,12 @@
-# EdgeCache License API (Local)
+# EdgeCache License API
 
-Local-first licensing backend for EdgeCache Optimizer.
+Licensing backend for EdgeCache Optimizer.
 
 ## Stack
 
 - PHP 8.0+
-- SQLite (file DB)
+- PostgreSQL (Neon recommended for Vercel)
+- SQLite fallback for local development only
 - No external dependencies
 
 ## Quick Start
@@ -16,11 +17,14 @@ Local-first licensing backend for EdgeCache Optimizer.
 cp .env.example .env
 ```
 
-2. Set your keys in `.env`:
+2. Set your env values in `.env`:
 
 - `EDGECACHE_MASTER_KEY`
 - `ADMIN_TOKEN`
 - optional `SIGNING_SECRET`
+- `DATABASE_URL` for production/Vercel (Neon)
+
+If `DATABASE_URL` is empty, the app falls back to local SQLite using `DB_PATH`.
 
 3. Run local server:
 
@@ -81,3 +85,15 @@ Create/update request body:
   - `X-EdgeCache-Signature: <hex hmac sha256 of raw body>`
 - Rate limiting is enforced per `license_key + IP`.
 - License keys are stored as SHA-256 hashes only.
+
+## Vercel + Neon
+
+1. Add env vars in Vercel:
+   - `DATABASE_URL`
+   - `EDGECACHE_MASTER_KEY`
+   - `ADMIN_TOKEN`
+   - `SIGNING_SECRET`
+   - `APP_ENV=production`
+   - `APP_DEBUG=false`
+2. Ensure Neon tables exist (`licenses`, `activations`, `rate_limits`, `audit_logs`).
+3. Redeploy after env changes.

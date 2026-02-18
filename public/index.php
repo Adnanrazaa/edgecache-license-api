@@ -43,8 +43,9 @@ spl_autoload_register(static function (string $class) use ($projectRoot): void {
 
 $config = require $projectRoot . '/config/app.php';
 $dbFile = $projectRoot . '/' . ltrim((string) $config['db_path'], '/');
+$databaseUrl = (string) ($config['database_url'] ?? '');
 
-$db = new Database($dbFile);
+$db = new Database($databaseUrl, $dbFile);
 $db->migrate();
 
 $repository = new LicenseRepository($db->pdo());

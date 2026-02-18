@@ -8,8 +8,12 @@ use PDO;
 
 final class LicenseRepository
 {
+    private string $driver;
+
     public function __construct(private readonly PDO $pdo)
     {
+        $driver = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $this->driver = is_string($driver) ? $driver : 'sqlite';
     }
 
     public function findLicense(string $keyHash): ?array
@@ -24,9 +28,10 @@ final class LicenseRepository
     public function upsertLicense(string $keyHash, string $plan, string $status, array $features, ?int $expiresAt): void
     {
         $now = time();
+        $featuresJsonExpr = $this->driver === 'pgsql' ? 'CAST(:features_json AS jsonb)' : ':features_json';
         $stmt = $this->pdo->prepare(
             'INSERT INTO licenses (key_hash, plan, status, features_json, expires_at, created_at, updated_at)
-             VALUES (:key_hash, :plan, :status, :features_json, :expires_at, :created_at, :updated_at)
+             VALUES (:key_hash, :plan, :status, ' . $featuresJsonExpr . ', :expires_at, :created_at, :updated_at)
              ON CONFLICT(key_hash) DO UPDATE SET
                 plan = excluded.plan,
                 status = excluded.status,
@@ -71,10 +76,11 @@ final class LicenseRepository
     {
         $stmt = $this->pdo->prepare(
             'UPDATE activations
-             SET status = "inactive", updated_at = :updated_at
+             SET status = :inactive_status, updated_at = :updated_at
              WHERE license_hash = :license_hash AND site_url = :site_url'
         );
         $stmt->execute([
+            'inactive_status' => 'inactive',
             'updated_at' => time(),
             'license_hash' => $keyHash,
             'site_url' => $siteUrl,
@@ -121,8 +127,9 @@ final class LicenseRepository
 
     public function logEvent(string $event, array $details): void
     {
+        $detailsExpr = $this->driver === 'pgsql' ? 'CAST(:details_json AS jsonb)' : ':details_json';
         $stmt = $this->pdo->prepare(
-            'INSERT INTO audit_logs (event, details_json, created_at) VALUES (:event, :details_json, :created_at)'
+            'INSERT INTO audit_logs (event, details_json, created_at) VALUES (:event, ' . $detailsExpr . ', :created_at)'
         );
         $stmt->execute([
             'event' => $event,

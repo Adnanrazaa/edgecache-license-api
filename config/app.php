@@ -7,6 +7,7 @@ return [
     'debug' => filter_var(getenv('APP_DEBUG') ?: 'false', FILTER_VALIDATE_BOOL),
     'name' => getenv('APP_NAME') ?: 'EdgeCache License API',
     'url' => getenv('APP_URL') ?: 'http://127.0.0.1:8080',
+    'database_url' => getenv('DATABASE_URL') ?: '',
     'db_path' => getenv('DB_PATH') ?: 'storage/license.db',
     'master_key' => getenv('EDGECACHE_MASTER_KEY') ?: '',
     'signing_secret' => getenv('SIGNING_SECRET') ?: '',
