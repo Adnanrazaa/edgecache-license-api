@@ -1,0 +1,6 @@
+.env
+storage/*.db
+storage/*.sqlite
+storage/*.sqlite3
+storage/*.log
+.DS_Store
